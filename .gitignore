@@ -1,0 +1,21 @@
+# Python e caches
+__pycache__/
+*.pyc
+
+# Aplicativos Desktop (C# e Python)
+AssinaturaApp_CSharp/
+AssinaturaRFrancoCSharp/
+assinaturas_geradas/
+*.bat
+preview_cache.png
+exemplo_assinatura.jpeg
+RFRANCO_LOGO_vetor.pdf
+
+# Arquivos de desenvolvimento com dados abertos
+# (Manter local para nao expor no GitHub publico)
+src_app/
+app.js
+app_desktop.py
+gerar_todas.py
+atualizar_senha.py
+assinatura_*.png

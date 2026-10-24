@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerador de Assinaturas de E-mail | R.Franco Engenharia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <!-- JSZip para exportação em lote -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+  <!-- Header Corporativo -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-wrapper">
+        <img src="logo_rfranco.png" alt="R.Franco Engenharia" class="header-logo" id="header-logo">
+        <div class="brand-text">
+          <h1>Gerador de Assinaturas Corporativas</h1>
+          <p class="brand-subtitle">Padrão Oficial de Comunicação &bull; R.Franco Engenharia</p>
+        </div>
+      </div>
+      <div class="header-badges">
+        <span class="badge badge-primary">Versão 2026.1</span>
+        <button type="button" class="btn-logout" id="btn-logout" title="Bloquear e sair do sistema">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          Sair / Bloquear
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- TELA DE LOGIN CORPORATIVO (Exibida quando bloqueado) -->
+  <section class="login-view" id="login-view">
+    <div class="login-card">
+      <div class="login-icon-box">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+      </div>
+      <h2>Acesso Corporativo</h2>
+      <p>Digite a chave de acesso da empresa para liberar o gerador oficial de assinaturas.</p>
+
+      <form id="login-form" class="login-form" onsubmit="return false;">
+        <div class="login-input-group">
+          <input 
+            type="password" 
+            id="login-password" 
+            class="login-input" 
+            placeholder="Digite a senha de acesso..." 
+            autocomplete="current-password"
+            required
+            autofocus
+          >
+          <button type="button" class="toggle-password-btn" id="btn-toggle-pwd" title="Mostrar/Ocultar senha">
+            <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
+        </div>
+
+        <div class="caps-lock-warning" id="caps-warning">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+          </svg>
+          Atenção: Caps Lock (Fixa) está ativado!
+        </div>
+
+        <div class="login-error-msg" id="login-error">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="15" y1="9" x2="9" y2="15"></line>
+            <line x1="9" y1="9" x2="15" y2="15"></line>
+          </svg>
+          <span>Senha incorreta. Verifique e tente novamente.</span>
+        </div>
+
+        <button type="submit" class="btn-login-submit" id="btn-login-submit">
+          <span id="btn-login-text">Acessar Gerador</span>
+        </button>
+      </form>
+
+      <div class="login-footer-info">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+        Ambiente Criptografado &bull; R.Franco Engenharia
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTAINER DINÂMICO DA APLICAÇÃO (Injetado após descriptografia) -->
+  <div id="app-root"></div>
+
+  <!-- Carrega os dados criptografados -->
+  <script src="app.enc.js"></script>
+
+  <!-- Script de Autenticação e Descriptografia Client-Side (Web Crypto API) -->
+  <script>
+    (function() {
+      const loginView = document.getElementById('login-view');
+      const loginForm = document.getElementById('login-form');
+      const loginPassword = document.getElementById('login-password');
+      const loginError = document.getElementById('login-error');
+      const capsWarning = document.getElementById('caps-warning');
+      const btnTogglePwd = document.getElementById('btn-toggle-pwd');
+      const btnLoginSubmit = document.getElementById('btn-login-submit');
+      const btnLoginText = document.getElementById('btn-login-text');
+      const btnLogout = document.getElementById('btn-logout');
+      const appRoot = document.getElementById('app-root');
+
+      // Detecção de Caps Lock
+      loginPassword.addEventListener('keyup', (e) => {
+        if (e.getModifierState && e.getModifierState('CapsLock')) {
+          capsWarning.classList.add('visible');
+        } else {
+          capsWarning.classList.remove('visible');
+        }
+      });
+
+      // Mostrar/Ocultar Senha
+      let pwdVisible = false;
+      btnTogglePwd.addEventListener('click', () => {
+        pwdVisible = !pwdVisible;
+        loginPassword.type = pwdVisible ? 'text' : 'password';
+        btnTogglePwd.innerHTML = pwdVisible 
+          ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`
+          : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+      });
+
+      // Conversor Base64 para Uint8Array
+      function base64ToUint8(str) {
+        const bin = atob(str);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) {
+          bytes[i] = bin.charCodeAt(i);
+        }
+        return bytes;
+      }
+
+      // Função de Descriptografia AES-GCM com Web Crypto API
+      async function decryptApp(password) {
+        if (!window.APP_ENCRYPTED) {
+          throw new Error('Dados criptografados não encontrados!');
+        }
+
+        const salt = base64ToUint8(window.APP_ENCRYPTED.salt);
+        const iv = base64ToUint8(window.APP_ENCRYPTED.iv);
+        const ciphertext = base64ToUint8(window.APP_ENCRYPTED.ciphertext);
+
+        const enc = new TextEncoder();
+        const keyMaterial = await crypto.subtle.importKey(
+          'raw',
+          enc.encode(password),
+          { name: 'PBKDF2' },
+          false,
+          ['deriveKey']
+        );
+
+        const key = await crypto.subtle.deriveKey(
+          {
+            name: 'PBKDF2',
+            salt: salt,
+            iterations: 100000,
+            hash: 'SHA-256'
+          },
+          keyMaterial,
+          { name: 'AES-GCM', length: 256 },
+          false,
+          ['decrypt']
+        );
+
+        const decryptedBuffer = await crypto.subtle.decrypt(
+          { name: 'AES-GCM', iv: iv },
+          key,
+          ciphertext
+        );
+
+        const jsonString = new TextDecoder().decode(decryptedBuffer);
+        return JSON.parse(jsonString);
+      }
+
+      // Executa o aplicativo após autenticação
+      function launchApp(bundle) {
+        appRoot.innerHTML = bundle.html;
+        
+        // Executa a lógica JavaScript isolada
+        try {
+          const runScript = new Function(bundle.js);
+          runScript();
+        } catch (err) {
+          console.error('Erro ao inicializar scripts da aplicação:', err);
+        }
+
+        // Esconde tela de login e exibe botão de logout
+        loginView.style.display = 'none';
+        btnLogout.classList.add('visible');
+      }
+
+      // Ação de Login
+      async function handleLogin(pwd) {
+        loginError.classList.remove('visible');
+        loginPassword.classList.remove('input-error');
+        btnLoginSubmit.disabled = true;
+        btnLoginText.innerHTML = '<span class="spinner"></span> Descriptografando...';
+
+        try {
+          const bundle = await decryptApp(pwd);
+          // Salva sessão localmente na aba (não persiste em outras abas ou após fechar navegador)
+          sessionStorage.setItem('rfranco_auth_session', pwd);
+          launchApp(bundle);
+        } catch (err) {
+          btnLoginSubmit.disabled = false;
+          btnLoginText.textContent = 'Acessar Gerador';
+          loginPassword.classList.add('input-error');
+          loginError.classList.add('visible');
+          loginPassword.select();
+        }
+      }
+
+      loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const pwd = loginPassword.value.trim();
+        if (pwd) {
+          handleLogin(pwd);
+        }
+      });
+
+      // Ação de Logout / Bloquear
+      btnLogout.addEventListener('click', () => {
+        sessionStorage.removeItem('rfranco_auth_session');
+        window.location.reload();
+      });
+
+      // Auto-login se a sessão já estiver ativa nesta aba
+      const activeSession = sessionStorage.getItem('rfranco_auth_session');
+      if (activeSession) {
+        handleLogin(activeSession);
+      }
+    })();
+  </script>
+</body>
+</html>
